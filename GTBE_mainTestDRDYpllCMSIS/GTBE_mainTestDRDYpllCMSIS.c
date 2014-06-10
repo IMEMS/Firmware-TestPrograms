@@ -146,9 +146,18 @@ volatile int32_t gADC_reading;
 
 // DAC output value
 int32_t g_output;
+#ifdef DAC_UDMA_MODE
 volatile uint8_t DAC_g_bufferPRI[3];
 volatile uint8_t DAC_g_bufferALT[3];
 volatile uint8_t DAC_g_bufferSel = DAC_BUFFER_SEL_ALT;
+#endif
+
+#ifdef DACd_UDMA_MODE
+volatile uint8_t DACd_g_bufferPRI[6];
+volatile uint8_t DACd_g_bufferALT[6];
+volatile uint8_t DACd_g_bufferSel = DAC_BUFFER_SEL_ALT;
+#endif
+
 // Signal Gain
 uint32_t A = 2;
 
@@ -340,12 +349,19 @@ int main(void) {
 	#ifdef PART_TM4C123GH6PM // EK-TM4C123GXL
 		twe_RGBInitSetGreen();
 	#endif
+
+	#ifdef DAC_UDMA_MODE
 	/* DAC initialization */
 	DAC_initDACuDMA(DAC_RANGE_PM5V, DAC_PWR_PUA | DAC_PWR_PUB, SysClkFreq);
 	//DAC_initTimersLDAC(true, false, 4);
 	DAC_initSSIint();
 	DAC_inituDMAautoSSI();
-
+	#endif
+	#ifdef DACd_UDMA_MODE
+	DACd_initDACuDMA(DAC_RANGE_PM5V, DAC_PWR_PUA | DAC_PWR_PUB, SysClkFreq);
+	DACd_initSSIint();
+	DACd_inituDMAautoSSI();
+	#endif
 
 	/* ADC initialization */
 	ADC_initADC(SysClkFreq);
@@ -566,13 +582,16 @@ int main(void) {
 				//					   UDMA_MODE_AUTO,
 				//					   (void *)DAC_g_bufferALT, (void *)(SSI0_BASE + SSI_O_DR),
 				//					   3);
-				HWREG(HWREG(UDMA_CTLBASE) + (DAC_SSI_TX_UDMA_CHANNEL << 4) + UDMA_O_SRCENDP) = (uint32_t)DAC_g_bufferALT + 3 - 1;
-				HWREG(HWREG(UDMA_CTLBASE) + (DAC_SSI_TX_UDMA_CHANNEL << 4) + UDMA_O_CHCTL) |= (UDMA_CHCTL_XFERMODE_AUTO | (((3-1) << UDMA_CHCTL_XFERSIZE_S) & UDMA_CHCTL_XFERSIZE_M));
+				HWREG(HWREG(UDMA_CTLBASE) + (DAC_SSI_TX_UDMA_CHANNEL << 4) + UDMA_O_SRCENDP) = (uint32_t)DAC_g_bufferALT + 6 - 1;
+				HWREG(HWREG(UDMA_CTLBASE) + (DAC_SSI_TX_UDMA_CHANNEL << 4) + UDMA_O_CHCTL) |= (UDMA_CHCTL_XFERMODE_AUTO | (((6-1) << UDMA_CHCTL_XFERSIZE_S) & UDMA_CHCTL_XFERSIZE_M));
 
 				//MAP_uDMAChannelEnable(UDMA_CHANNEL_SSI0TX );
-				DAC_g_bufferALT[0] = DAC_ADDRESS_FORCER; // Input reg Command
-				DAC_g_bufferALT[1] = (unsigned char)(g_output >> 16); // First data byte
-				DAC_g_bufferALT[2] = (unsigned char)(g_output >> 8);  // Second data byte
+				DACd_g_bufferALT[0] = DAC_ADDRESS_FORCER; // Input reg Command
+				DACd_g_bufferALT[1] = (unsigned char)(g_output >> 16); // First data byte
+				DACd_g_bufferALT[2] = (unsigned char)(g_output >> 8);  // Second data byte
+				DACd_g_bufferPRI[3] = (DAC_REG_CTL << 3) | DAC_CTL_NOP	//Nop
+				DACd_g_bufferPRI[4] = 0x00000000;
+				DACd_g_bufferPRI[5] = 0x00000000;
 			}
 			else if(DAC_g_bufferSel == DAC_BUFFER_SEL_ALT) {
 				DAC_g_bufferSel = DAC_BUFFER_SEL_PRI; // flag to indicate that ALT output buffer
@@ -587,14 +606,18 @@ int main(void) {
 				//					   UDMA_MODE_AUTO,
 				//					   (void *)DAC_g_bufferPRI, (void *)(SSI0_BASE + SSI_O_DR),
 				//					   3);
-				HWREG(HWREG(UDMA_CTLBASE) + (DAC_SSI_TX_UDMA_CHANNEL << 4) + UDMA_O_SRCENDP) = (uint32_t)DAC_g_bufferPRI + 3 - 1;
-				HWREG(HWREG(UDMA_CTLBASE) + (DAC_SSI_TX_UDMA_CHANNEL << 4) + UDMA_O_CHCTL) |= (UDMA_CHCTL_XFERMODE_AUTO | (((3-1) << UDMA_CHCTL_XFERSIZE_S) & UDMA_CHCTL_XFERSIZE_M));
+				HWREG(HWREG(UDMA_CTLBASE) + (DAC_SSI_TX_UDMA_CHANNEL << 4) + UDMA_O_SRCENDP) = (uint32_t)DAC_g_bufferPRI + 6 - 1;
+				HWREG(HWREG(UDMA_CTLBASE) + (DAC_SSI_TX_UDMA_CHANNEL << 4) + UDMA_O_CHCTL) |= (UDMA_CHCTL_XFERMODE_AUTO | (((6-1) << UDMA_CHCTL_XFERSIZE_S) & UDMA_CHCTL_XFERSIZE_M));
 
 
 				//MAP_uDMAChannelEnable(UDMA_CHANNEL_SSI0TX );
-				DAC_g_bufferPRI[0] = DAC_ADDRESS_FORCER; // Input reg Command
-				DAC_g_bufferPRI[1] = (unsigned char)(g_output >> 16); 		 // First data byte
-				DAC_g_bufferPRI[2] = (unsigned char)(g_output >> 8);				 // Second data byte
+
+				DACd_g_bufferPRI[0] = DAC_ADDRESS_FORCER; // Input reg Command
+				DACd_g_bufferPRI[1] = (unsigned char)(g_output >> 16); 		 // First data byte
+				DACd_g_bufferPRI[2] = (unsigned char)(g_output >> 8);		 // Second data byte
+				DACd_g_bufferPRI[3] = (DAC_REG_CTL << 3) | DAC_CTL_NOP	//Nop
+				DACd_g_bufferPRI[4] = 0x00000000;
+				DACd_g_bufferPRI[5] = 0x00000000;
 			}
 
 			// Processing Indicator - Turn off
