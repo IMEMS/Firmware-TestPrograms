@@ -99,7 +99,7 @@
  *********/
 //#define UART_OUT_MODE
 //#define QSSI_OUT_MODE
-#define DEBUG_THROUGH
+//#define DEBUG_THROUGH
 
 /**************
  * Parameters *
@@ -350,17 +350,26 @@ int main(void) {
 		twe_RGBInitSetGreen();
 	#endif
 
-	#ifdef DAC_UDMA_MODE
 	/* DAC initialization */
+	#ifdef DAC_UDMA_MODE
 	DAC_initDACuDMA(DAC_RANGE_PM5V, DAC_PWR_PUA | DAC_PWR_PUB, SysClkFreq);
 	//DAC_initTimersLDAC(true, false, 4);
 	DAC_initSSIint();
 	DAC_inituDMAautoSSI();
 	#endif
 	#ifdef DACd_UDMA_MODE
-	DACd_initDACuDMA(DAC_RANGE_PM5V, DAC_PWR_PUA | DAC_PWR_PUB, SysClkFreq);
+	DACd_initDACuDMA(DAC_RANGE_PM5V, DAC_PWR_PUC | DAC_PWR_PUG, SysClkFreq);
 	DAC_initSSIint();
 	DACd_inituDMAautoSSI();
+	DACd_g_bufferPRI[0] = DAC_ADDRESS_FORCER; // Input reg Command
+	DACd_g_bufferPRI[3] = (DAC_REG_CTL << 3) | DAC_CTL_NOP;	//Nop
+	DACd_g_bufferPRI[4] = 0x00000000;
+	DACd_g_bufferPRI[5] = 0x00000000;
+	DACd_g_bufferALT[0] = DAC_ADDRESS_FORCER; // Input reg Command
+	DACd_g_bufferALT[3] = (DAC_REG_CTL << 3) | DAC_CTL_NOP;	//Nop
+	DACd_g_bufferALT[4] = 0x00000000;
+	DACd_g_bufferALT[5] = 0x00000000;
+
 	#endif
 
 	/* ADC initialization */
@@ -565,7 +574,7 @@ int main(void) {
 			#else
 				g_output = (int32_t) (A * g_nco_I.data.fn[0]);
 			#endif
-
+				g_output = 12800000;
 
 
 
@@ -587,12 +596,12 @@ int main(void) {
 				HWREG(HWREG(UDMA_CTLBASE) + (DAC_SSI_TX_UDMA_CHANNEL << 4) + UDMA_O_CHCTL) |= (UDMA_CHCTL_XFERMODE_AUTO | (((6-1) << UDMA_CHCTL_XFERSIZE_S) & UDMA_CHCTL_XFERSIZE_M));
 
 				//MAP_uDMAChannelEnable(UDMA_CHANNEL_SSI0TX );
-				DACd_g_bufferALT[0] = DAC_ADDRESS_FORCER; // Input reg Command
+				//DACd_g_bufferALT[0] = DAC_ADDRESS_FORCER; // Input reg Command
 				DACd_g_bufferALT[1] = (unsigned char)(g_output >> 16);  // First data byte
 				DACd_g_bufferALT[2] = (unsigned char)(g_output >> 8);   // Second data byte
-				DACd_g_bufferPRI[3] = (DAC_REG_CTL << 3) | DAC_CTL_NOP;	//Nop
-				DACd_g_bufferPRI[4] = 0x00000000;
-				DACd_g_bufferPRI[5] = 0x00000000;
+				//DACd_g_bufferALT[3] = (DAC_REG_CTL << 3) | DAC_CTL_NOP;	//Nop
+				//DACd_g_bufferALT[4] = 0x00000000;
+				//DACd_g_bufferALT[5] = 0x00000000;
 			}
 			else if(DACd_g_bufferSel == DAC_BUFFER_SEL_ALT) {
 				DACd_g_bufferSel = DAC_BUFFER_SEL_PRI; // flag to indicate that ALT output buffer
@@ -613,12 +622,12 @@ int main(void) {
 
 				//MAP_uDMAChannelEnable(UDMA_CHANNEL_SSI0TX );
 
-				DACd_g_bufferPRI[0] = DAC_ADDRESS_FORCER; // Input reg Command
+				//DACd_g_bufferPRI[0] = DAC_ADDRESS_FORCER; // Input reg Command
 				DACd_g_bufferPRI[1] = (unsigned char)(g_output >> 16); 		 // First data byte
 				DACd_g_bufferPRI[2] = (unsigned char)(g_output >> 8);		 // Second data byte
-				DACd_g_bufferPRI[3] = (DAC_REG_CTL << 3) | DAC_CTL_NOP;		 //Nop
-				DACd_g_bufferPRI[4] = 0x00000000;
-				DACd_g_bufferPRI[5] = 0x00000000;
+				//DACd_g_bufferPRI[3] = (DAC_REG_CTL << 3) | DAC_CTL_NOP;		 //Nop
+				//DACd_g_bufferPRI[4] = 0x00000000;
+				//DACd_g_bufferPRI[5] = 0x00000000;
 			}
 
 			// Processing Indicator - Turn off
