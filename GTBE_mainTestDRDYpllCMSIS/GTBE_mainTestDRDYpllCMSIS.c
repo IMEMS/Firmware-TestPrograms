@@ -104,7 +104,7 @@
 /**************
  * Parameters *
  **************/
-#define DAC_ADDRESS_FORCER 		DAC_ADDR_A
+#define DAC_ADDRESS_FORCER 		DAC_ADDR_C
 
 // Flash Memory Map
 #define FLASH_ADDR_CODE   0x0000 // 0x0000 - 0x2800 10KB Code (Protected - Execute Only)
@@ -359,7 +359,7 @@ int main(void) {
 	#endif
 	#ifdef DACd_UDMA_MODE
 	DACd_initDACuDMA(DAC_RANGE_PM5V, DAC_PWR_PUA | DAC_PWR_PUB, SysClkFreq);
-	DACd_initSSIint();
+	DAC_initSSIint();
 	DACd_inituDMAautoSSI();
 	#endif
 
@@ -384,6 +384,7 @@ int main(void) {
 
 		#endif
 	#endif
+
 	/* Control Loop init */
 	// Initialize FIR Filter
 	// Call FIR init function to initialize the instance structure
@@ -569,8 +570,8 @@ int main(void) {
 
 
 			/* Update Output Buffers */
-			if(DAC_g_bufferSel == DAC_BUFFER_SEL_PRI) {
-				DAC_g_bufferSel = DAC_BUFFER_SEL_ALT; // flag to indicate that ALT output buffer
+			if(DACd_g_bufferSel == DAC_BUFFER_SEL_PRI) {
+				DACd_g_bufferSel = DAC_BUFFER_SEL_ALT; // flag to indicate that ALT output buffer
 													  // should be sent to DAC
 
 				// Set up the transfer parameters for the SW uDMA channel.  This will
@@ -582,19 +583,19 @@ int main(void) {
 				//					   UDMA_MODE_AUTO,
 				//					   (void *)DAC_g_bufferALT, (void *)(SSI0_BASE + SSI_O_DR),
 				//					   3);
-				HWREG(HWREG(UDMA_CTLBASE) + (DAC_SSI_TX_UDMA_CHANNEL << 4) + UDMA_O_SRCENDP) = (uint32_t)DAC_g_bufferALT + 6 - 1;
+				HWREG(HWREG(UDMA_CTLBASE) + (DAC_SSI_TX_UDMA_CHANNEL << 4) + UDMA_O_SRCENDP) = (uint32_t)DACd_g_bufferALT + 6 - 1;
 				HWREG(HWREG(UDMA_CTLBASE) + (DAC_SSI_TX_UDMA_CHANNEL << 4) + UDMA_O_CHCTL) |= (UDMA_CHCTL_XFERMODE_AUTO | (((6-1) << UDMA_CHCTL_XFERSIZE_S) & UDMA_CHCTL_XFERSIZE_M));
 
 				//MAP_uDMAChannelEnable(UDMA_CHANNEL_SSI0TX );
 				DACd_g_bufferALT[0] = DAC_ADDRESS_FORCER; // Input reg Command
-				DACd_g_bufferALT[1] = (unsigned char)(g_output >> 16); // First data byte
-				DACd_g_bufferALT[2] = (unsigned char)(g_output >> 8);  // Second data byte
-				DACd_g_bufferPRI[3] = (DAC_REG_CTL << 3) | DAC_CTL_NOP	//Nop
+				DACd_g_bufferALT[1] = (unsigned char)(g_output >> 16);  // First data byte
+				DACd_g_bufferALT[2] = (unsigned char)(g_output >> 8);   // Second data byte
+				DACd_g_bufferPRI[3] = (DAC_REG_CTL << 3) | DAC_CTL_NOP;	//Nop
 				DACd_g_bufferPRI[4] = 0x00000000;
 				DACd_g_bufferPRI[5] = 0x00000000;
 			}
-			else if(DAC_g_bufferSel == DAC_BUFFER_SEL_ALT) {
-				DAC_g_bufferSel = DAC_BUFFER_SEL_PRI; // flag to indicate that ALT output buffer
+			else if(DACd_g_bufferSel == DAC_BUFFER_SEL_ALT) {
+				DACd_g_bufferSel = DAC_BUFFER_SEL_PRI; // flag to indicate that ALT output buffer
 													  // should be sent to DAC
 				// Set up the transfer parameters for the SW uDMA channel.  This will
 				// configure the transfer buffers and the transfer size.
@@ -606,7 +607,7 @@ int main(void) {
 				//					   UDMA_MODE_AUTO,
 				//					   (void *)DAC_g_bufferPRI, (void *)(SSI0_BASE + SSI_O_DR),
 				//					   3);
-				HWREG(HWREG(UDMA_CTLBASE) + (DAC_SSI_TX_UDMA_CHANNEL << 4) + UDMA_O_SRCENDP) = (uint32_t)DAC_g_bufferPRI + 6 - 1;
+				HWREG(HWREG(UDMA_CTLBASE) + (DAC_SSI_TX_UDMA_CHANNEL << 4) + UDMA_O_SRCENDP) = (uint32_t)DACd_g_bufferPRI + 6 - 1;
 				HWREG(HWREG(UDMA_CTLBASE) + (DAC_SSI_TX_UDMA_CHANNEL << 4) + UDMA_O_CHCTL) |= (UDMA_CHCTL_XFERMODE_AUTO | (((6-1) << UDMA_CHCTL_XFERSIZE_S) & UDMA_CHCTL_XFERSIZE_M));
 
 
@@ -615,7 +616,7 @@ int main(void) {
 				DACd_g_bufferPRI[0] = DAC_ADDRESS_FORCER; // Input reg Command
 				DACd_g_bufferPRI[1] = (unsigned char)(g_output >> 16); 		 // First data byte
 				DACd_g_bufferPRI[2] = (unsigned char)(g_output >> 8);		 // Second data byte
-				DACd_g_bufferPRI[3] = (DAC_REG_CTL << 3) | DAC_CTL_NOP	//Nop
+				DACd_g_bufferPRI[3] = (DAC_REG_CTL << 3) | DAC_CTL_NOP;		 //Nop
 				DACd_g_bufferPRI[4] = 0x00000000;
 				DACd_g_bufferPRI[5] = 0x00000000;
 			}
