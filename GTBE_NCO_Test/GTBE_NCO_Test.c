@@ -105,7 +105,7 @@
 /**************
  * Parameters *
  **************/
-#define DAC_ADDRESS_FORCER 		DAC_ADDR_A
+#define DAC_ADDRESS_AD 		DAC_ADDR_A
 
 // Flash Memory Map
 #define FLASH_ADDR_CODE   0x0000 // 0x0000 - 0x2800 10KB Code (Protected - Execute Only)
@@ -583,7 +583,7 @@ int main(void) {
 				HWREG(HWREG(UDMA_CTLBASE) + (DAC_SSI_TX_UDMA_CHANNEL << 4) + UDMA_O_CHCTL) |= (UDMA_CHCTL_XFERMODE_AUTO | (((3-1) << UDMA_CHCTL_XFERSIZE_S) & UDMA_CHCTL_XFERSIZE_M));
 
 				//MAP_uDMAChannelEnable(UDMA_CHANNEL_SSI0TX );
-				DAC_g_bufferALT[0] = DAC_ADDRESS_FORCER; // Input reg Command
+				DAC_g_bufferALT[0] = DAC_ADDRESS_AD; // Input reg Command
 				DAC_g_bufferALT[1] = (unsigned char)(g_output >> 16); // First data byte
 				DAC_g_bufferALT[2] = (unsigned char)(g_output >> 8);  // Second data byte
 			}
@@ -605,7 +605,7 @@ int main(void) {
 
 
 				//MAP_uDMAChannelEnable(UDMA_CHANNEL_SSI0TX );
-				DAC_g_bufferPRI[0] = DAC_ADDRESS_FORCER; // Input reg Command
+				DAC_g_bufferPRI[0] = DAC_ADDRESS_AD; // Input reg Command
 				DAC_g_bufferPRI[1] = (unsigned char)(g_output >> 16); 		 // First data byte
 				DAC_g_bufferPRI[2] = (unsigned char)(g_output >> 8);				 // Second data byte
 			}

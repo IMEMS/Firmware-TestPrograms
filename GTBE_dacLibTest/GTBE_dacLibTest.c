@@ -7,26 +7,6 @@
  *  Georgia Tech IMEMS
  *  February 2014
  *  
- *  GT BE Peripherals:
- *   DAC: AD5754
- *    INPUTS
- *     ~LDAC_Forcer -> GPIO PE1
- *     ~LDAC_Quad   -> GPIO PE2
- *     ~CLR         -> GPIO PE3
- *	   SERIAL
- *     SCLK         -> SPI0_CLK: PA2
- *     ~SYNC		-> SPI0_FSS: PA3 (CS)
- *     SDO		    -> SPI0_RX:  PA4 (MISO)
- *     SDIN         -> SPI0_TX:  PA5 (MOSI)
- *    OUTPUTS
- *     DAC A 		-> DACout_D
- *     DAC B		-> DACout_C
- *     DAC C		-> QUADRATURE_CONTROL_2_L
- *     DAC D		-> QUADRATURE_CONTROL_2_H
- *     DAC E 		-> QUADRATURE_CONTROL_1_L
- *     DAC F 		-> QUADRATURE_CONTROL_1_H
- *     DAC G 		-> ANTINODE_FORCER_2_H
- *     DAC H 		-> NODE_FORCER_2_H
  *
  *  This work is licensed under the Creative Commons Attribution-ShareAlike 3.0
  *  Unported License. To view a copy of this license, visit
@@ -35,7 +15,6 @@
  *
  ********************************************************************************/
 
-#define TARGET_IS_BLIZZARD_RB1
 #include <stdint.h>
 #include <stdbool.h>
 #include <math.h>
@@ -44,6 +23,8 @@
 #include "inc/hw_memmap.h"
 #include "inc/hw_ssi.h"
 #include "inc/hw_types.h"
+
+// Tivaware
 #include "driverlib/ssi.h"
 #include "driverlib/gpio.h"
 #include "driverlib/pin_map.h"
@@ -53,6 +34,8 @@
 #include "inc/hw_ints.h"
 #include "driverlib/timer.h"
 //#include "driverlib/udma.h"
+
+// GTBE Lib
 #include "dac_ad5754.h"
 
 #ifndef M_PI
@@ -125,6 +108,10 @@ void Timer2IntHandlerDACout(void) {
 	}
 }
 
+
+/********
+ * Main *
+ ********/
 void main() {
 	// Set system clock to 50 MHz (400MHz main PLL (predivided by 2 and divide by 4 sysdiv)  [16MHz external xtal drives PLL]
 	SysCtlClockSet(SYSCTL_SYSDIV_4 | SYSCTL_USE_PLL | SYSCTL_OSC_MAIN | SYSCTL_XTAL_16MHZ);
